@@ -87,7 +87,7 @@ def get_index(
                 + spec[first_at + 1 :]
             )
         if platform:
-            spec = spec + "[" + ",".join(platform) + "]"
+            spec = f"{spec}[" + ",".join(platform) + "]"
         return spec
 
     all_channels = list(map(fixup_channel_spec, all_channels))
@@ -144,22 +144,19 @@ def load_channels(
     subprio_index = len(index)
     if has_priority:
         # first, count unique channels
-        n_channels = len(set([entry["channel"].canonical_name for _, entry in index]))
+        n_channels = len({entry["channel"].canonical_name for _, entry in index})
         current_channel = index[0][1]["channel"].canonical_name
         channel_prio = n_channels
 
     for subdir, entry in index:
-        # add priority here
         if has_priority:
             if entry["channel"].canonical_name != current_channel:
                 channel_prio -= 1
                 current_channel = entry["channel"].canonical_name
             priority = channel_prio
-        else:
-            priority = 0
-        if has_priority:
             subpriority = 0
         else:
+            priority = 0
             subpriority = subprio_index
             subprio_index -= 1
 
@@ -169,9 +166,7 @@ def load_channels(
 
         if context.verbosity != 0 and not context.json:
             print(
-                "Channel: {}, platform: {}, prio: {} : {}".format(
-                    entry["channel"], entry["platform"], priority, subpriority
-                )
+                f'Channel: {entry["channel"]}, platform: {entry["platform"]}, prio: {priority} : {subpriority}'
             )
             print("Cache path: ", subdir.cache_path())
 
@@ -228,10 +223,7 @@ def init_api_context(use_mamba_experimental=False):
 
     def get_base_url(url, name=None):
         tmp = url.rsplit("/", 1)[0]
-        if name:
-            if tmp.endswith(name):
-                return tmp.rsplit("/", 1)[0]
-        return tmp
+        return tmp.rsplit("/", 1)[0] if name and tmp.endswith(name) else tmp
 
     api_ctx.channel_alias = str(
         get_base_url(context.channel_alias.url(with_credentials=True))
@@ -310,8 +302,7 @@ def to_package_record_from_subjson(entry, pkg, jsn_string):
     info["url"] = join_url(channel_url, pkg)
     if not info.get("subdir"):
         info["subdir"] = entry["platform"]
-    package_record = PackageRecord(**info)
-    return package_record
+    return PackageRecord(**info)
 
 
 def get_installed_packages(prefix, show_channel_urls=None):
@@ -361,12 +352,12 @@ def compute_final_precs(
 
     final_precs = IndexedSet(prefix_records)
 
-    lookup_dict = {}
-    for _, entry in index:
-        lookup_dict[
-            entry["channel"].platform_url(entry["platform"], with_credentials=False)
-        ] = entry
-
+    lookup_dict = {
+        entry["channel"].platform_url(
+            entry["platform"], with_credentials=False
+        ): entry
+        for _, entry in index
+    }
     i_rec: PackageRecord
     for _, pkg in to_unlink:
         for i_rec in installed_pkg_recs:
@@ -384,15 +375,9 @@ def compute_final_precs(
             print("No package record found!")
 
     for c, pkg, jsn_s in to_link:
-        if c.startswith("file://"):
-            # The conda functions (specifically remove_auth) assume the input
-            # is a url; a file uri on windows with a drive letter messes them
-            # up.
-            key = c
-        else:
-            key = split_anaconda_token(remove_auth(c))[0]
+        key = c if c.startswith("file://") else split_anaconda_token(remove_auth(c))[0]
         if key not in lookup_dict:
-            raise ValueError("missing key {} in channels: {}".format(key, lookup_dict))
+            raise ValueError(f"missing key {key} in channels: {lookup_dict}")
         sdir = lookup_dict[key]
 
         rec = to_package_record_from_subjson(sdir, pkg, jsn_s)
@@ -432,8 +417,7 @@ def to_txn_precs(
         neutered_specs=(),
     )
 
-    conda_transaction = UnlinkLinkTransaction(pref_setup)
-    return conda_transaction
+    return UnlinkLinkTransaction(pref_setup)
 
 
 def to_txn(

@@ -96,13 +96,13 @@ class TestInfo:
             expected_name = "None"
             location = "-"
         elif prefix_selection == "env_var":
-            expected_name = name + " (active)"
+            expected_name = f"{name} (active)"
             location = prefix
         else:
             if existing_prefix:
-                expected_name = name + " (not env)"
+                expected_name = f"{name} (not env)"
             else:
-                expected_name = name + " (not found)"
+                expected_name = f"{name} (not found)"
             location = prefix
 
         assert f"environment : {expected_name}" in infos

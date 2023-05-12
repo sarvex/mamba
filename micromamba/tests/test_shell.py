@@ -113,9 +113,7 @@ class TestShell:
 
         def custom_shell(shell):
             umamba = get_umamba()
-            f_name = os.path.join(
-                TestShell.root_prefix, "shell_script_" + random_string()
-            )
+            f_name = os.path.join(TestShell.root_prefix, f"shell_script_{random_string()}")
             if shell == "cmd.exe":
                 f_name += ".bat"
                 cmd = [shell, "/c", f_name]
@@ -184,9 +182,8 @@ class TestShell:
         if prefix_exists:
             # Create the environment for this test, so that it exists
             create("-n", TestShell.env_name, "-q", "--offline", no_dry_run=True)
-        else:
-            if prefix_is_root:
-                shutil.rmtree(TestShell.root_prefix)
+        elif prefix_is_root:
+            shutil.rmtree(TestShell.root_prefix)
 
         if prefix_is_root:
             p = TestShell.root_prefix

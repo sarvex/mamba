@@ -131,8 +131,7 @@ class Mermaid(Directive):
         if "inline" in self.options:
             node["inline"] = True
 
-        caption = self.options.get("caption")
-        if caption:
+        if caption := self.options.get("caption"):
             node = figure_wrapper(self, node, caption)
 
         return [node]
@@ -149,8 +148,8 @@ def render_mm(self, code, options, fmt, prefix="mermaid"):
         code + str(options) + str(self.builder.config.mermaid_sequence_config)
     ).encode("utf-8")
 
-    basename = "%s-%s" % (prefix, sha1(hashkey).hexdigest())
-    fname = "%s.%s" % (basename, fmt)
+    basename = f"{prefix}-{sha1(hashkey).hexdigest()}"
+    fname = f"{basename}.{fmt}"
     relfn = posixpath.join(self.builder.imgpath, fname)
     outdir = os.path.join(self.builder.outdir, self.builder.imagedir)
     outfn = os.path.join(outdir, fname)
@@ -244,7 +243,7 @@ def render_mm_html(self, node, code, options, prefix="mermaid", imgcls=None, alt
     else:
         if alt is None:
             alt = node.get("alt", self.encode(code).strip())
-        imgcss = imgcls and 'class="%s"' % imgcls or ""
+        imgcss = imgcls and f'class="{imgcls}"' or ""
         if fmt == "svg":
             svgtag = """<object data="%s" type="image/svg+xml">
             <p class="warning">%s</p></object>\n""" % (
@@ -255,7 +254,7 @@ def render_mm_html(self, node, code, options, prefix="mermaid", imgcls=None, alt
         else:
             if "align" in node:
                 self.body.append(
-                    '<div align="%s" class="align-%s">' % (node["align"], node["align"])
+                    f'<div align="{node["align"]}" class="align-{node["align"]}">'
                 )
 
             self.body.append('<img src="%s" alt="%s" %s/>\n' % (fname, alt, imgcss))
@@ -310,11 +309,6 @@ def render_mm_latex(self, node, code, options, prefix="mermaid"):
         )
 
     is_inline = self.is_inline(node)
-    if is_inline:
-        para_separator = ""
-    else:
-        para_separator = "\n"
-
     if fname is not None:
         post = None
         if not is_inline and "align" in node:
@@ -324,6 +318,7 @@ def render_mm_latex(self, node, code, options, prefix="mermaid"):
             elif node["align"] == "right":
                 self.body.append("{\\hspace*{\\fill}")
                 post = "}"
+        para_separator = "" if is_inline else "\n"
         self.body.append(
             "%s\\sphinxincludegraphics{%s}%s" % (para_separator, fname, para_separator)
         )
@@ -370,7 +365,7 @@ def man_visit_mermaid(self, node):
 
 def config_inited(app, config):
     version = config.mermaid_version
-    mermaid_js_url = "https://unpkg.com/mermaid@{}/dist/mermaid.min.js".format(version)
+    mermaid_js_url = f"https://unpkg.com/mermaid@{version}/dist/mermaid.min.js"
     app.add_js_file(mermaid_js_url)
     app.add_js_file(
         None,
@@ -402,7 +397,7 @@ def setup(app):
     app.add_config_value("mermaid_cmd", "mmdc", "html")
     app.add_config_value("mermaid_pdfcrop", "", "html")
     app.add_config_value("mermaid_output_format", "raw", "html")
-    app.add_config_value("mermaid_params", list(), "html")
+    app.add_config_value("mermaid_params", [], "html")
     app.add_config_value("mermaid_verbose", False, "html")
     app.add_config_value("mermaid_sequence_config", False, "html")
     app.add_config_value("mermaid_version", "8.10.2", "html")

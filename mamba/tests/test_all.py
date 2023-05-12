@@ -220,20 +220,16 @@ def test_multi_channels(config_file, tmpdir):
 
 def test_update_py():
     # check updating a package when a newer version
-    if platform.system() == "Windows":
-        shell_type = "cmd.exe"
-    else:
-        shell_type = "bash"
-
+    shell_type = "cmd.exe" if platform.system() == "Windows" else "bash"
     with Environment(shell_type) as env:
-        env.mamba(f'install -q -y "python=3.8" pip -c conda-forge')
+        env.mamba('install -q -y "python=3.8" pip -c conda-forge')
         out = env.execute('python -c "import sys; print(sys.version)"')
         assert "3.8" in out[0]
 
         out = env.execute('python -c "import pip; print(pip.__version__)"')
         assert len(out)
 
-        env.mamba(f'install -q -y "python=3.9" -c conda-forge')
+        env.mamba('install -q -y "python=3.9" -c conda-forge')
         out = env.execute('python -c "import sys; print(sys.version)"')
         assert "3.9" in out[0]
         out = env.execute('python -c "import pip; print(pip.__version__)"')
@@ -270,4 +266,4 @@ def test_info(use_json):
         output = json.loads(output)
         assert output["mamba_version"] == __version__
     else:
-        assert "mamba version : " + __version__ in output
+        assert f"mamba version : {__version__}" in output

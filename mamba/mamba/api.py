@@ -99,7 +99,7 @@ class MambaSolver:
                 error_string += f" - {c}\n"
             error_string += api_solver.explain_problems()
             print(error_string)
-            raise RuntimeError("Solver could not find solution." + error_string)
+            raise RuntimeError(f"Solver could not find solution.{error_string}")
 
         if pkg_cache_path is None:
             # use values from conda

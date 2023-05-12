@@ -69,9 +69,9 @@ class TestInstall:
         ],
     )
     def test_specs(self, source, file_type, existing_cache):
-        cmd = []
         specs = []
 
+        cmd = []
         if source in ("cli_only", "both"):
             specs = ["xframe", "xtl"]
             cmd = list(specs)
@@ -86,10 +86,8 @@ class TestInstall:
             elif file_type == "explicit":
                 channel = "https://conda.anaconda.org/conda-forge/linux-64/"
                 explicit_specs = [
-                    channel
-                    + "xtensor-0.21.5-hc9558a2_0.tar.bz2#d330e02e5ed58330638a24601b7e4887",
-                    channel
-                    + "xsimd-7.4.8-hc9558a2_0.tar.bz2#32d5b7ad7d6511f1faacf87e53a63e5f",
+                    f"{channel}xtensor-0.21.5-hc9558a2_0.tar.bz2#d330e02e5ed58330638a24601b7e4887",
+                    f"{channel}xsimd-7.4.8-hc9558a2_0.tar.bz2#32d5b7ad7d6511f1faacf87e53a63e5f",
                 ]
                 file_content = ["@EXPLICIT"] + explicit_specs
                 specs = explicit_specs
@@ -155,7 +153,7 @@ class TestInstall:
             cmd += ["-n", n]
 
         if yaml_name:
-            f_name = random_string() + ".yaml"
+            f_name = f"{random_string()}.yaml"
             spec_file = os.path.join(TestInstall.prefix, f_name)
 
             if yaml_name == "prefix":
@@ -206,7 +204,7 @@ class TestInstall:
             expected_channels += ["cli"]
 
         if yaml:
-            f_name = random_string() + ".yaml"
+            f_name = f"{random_string()}.yaml"
             spec_file = os.path.join(TestInstall.prefix, f_name)
 
             file_content = [
@@ -224,7 +222,7 @@ class TestInstall:
             expected_channels += ["env_var"]
 
         if rc_file:
-            f_name = random_string() + ".yaml"
+            f_name = f"{random_string()}.yaml"
             rc_file = os.path.join(TestInstall.prefix, f_name)
 
             file_content = ["channels: [rc]"]
@@ -245,27 +243,25 @@ class TestInstall:
 
     @pytest.mark.parametrize("type", ("yaml", "classic", "explicit"))
     def test_multiple_spec_files(self, type, existing_cache):
-        cmd = []
         specs = ["xtensor", "xsimd"]
         channel = "https://conda.anaconda.org/conda-forge/linux-64/"
         explicit_specs = [
-            channel
-            + "xtensor-0.21.5-hc9558a2_0.tar.bz2#d330e02e5ed58330638a24601b7e4887",
-            channel
-            + "linux-64/xsimd-7.4.8-hc9558a2_0.tar.bz2#32d5b7ad7d6511f1faacf87e53a63e5f",
+            f"{channel}xtensor-0.21.5-hc9558a2_0.tar.bz2#d330e02e5ed58330638a24601b7e4887",
+            f"{channel}linux-64/xsimd-7.4.8-hc9558a2_0.tar.bz2#32d5b7ad7d6511f1faacf87e53a63e5f",
         ]
 
+        cmd = []
         for i in range(2):
             f_name = random_string()
             file = os.path.join(TestInstall.prefix, f_name)
 
-            if type == "yaml":
-                file += ".yaml"
-                file_content = [f"dependencies: [{specs[i]}]"]
-            elif type == "classic":
+            if type == "classic":
                 file_content = [specs[i]]
                 expected_specs = specs
-            else:  # explicit
+            elif type == "yaml":
+                file += ".yaml"
+                file_content = [f"dependencies: [{specs[i]}]"]
+            else:
                 file_content = ["@EXPLICIT", explicit_specs[i]]
 
             with open(file, "w") as f:
@@ -273,15 +269,15 @@ class TestInstall:
 
             cmd += ["-f", file]
 
-        if type == "yaml":
+        if type == "classic":
+            res = install(*cmd, "--print-config-only")
+            assert res["specs"] == specs
+        elif type == "yaml":
             with pytest.raises(subprocess.CalledProcessError):
                 install(*cmd, "--print-config-only")
         else:
             res = install(*cmd, "--print-config-only")
-            if type == "classic":
-                assert res["specs"] == specs
-            else:  # explicit
-                assert res["specs"] == [explicit_specs[0]]
+            assert res["specs"] == [explicit_specs[0]]
 
     @pytest.mark.parametrize("priority", (None, "disabled", "flexible", "strict"))
     @pytest.mark.parametrize("no_priority", (None, True))

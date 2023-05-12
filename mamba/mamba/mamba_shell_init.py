@@ -47,9 +47,10 @@ def add_mamba_to_rcfile(file, conda_prefix):
         )
     new_content = []
     for i, line in enumerate(current_content):
-        if line.startswith("# <<< conda initialize <<<"):
-            if check_init_block(current_content, i, native_path_to_unix(conda_prefix)):
-                new_content.append(snippet.format(mamba_source_path=mamba_source_path))
+        if line.startswith("# <<< conda initialize <<<") and check_init_block(
+            current_content, i, native_path_to_unix(conda_prefix)
+        ):
+            new_content.append(snippet.format(mamba_source_path=mamba_source_path))
         new_content.append(line)
 
     with open(file, "w") as fo:
@@ -60,19 +61,11 @@ def add_mamba_to_rcfile(file, conda_prefix):
 
 
 def shell_init(args):
-    if args.all:
-        selected_shells = COMPATIBLE_SHELLS
-    else:
-        selected_shells = tuple(args.shells)
-
+    selected_shells = COMPATIBLE_SHELLS if args.all else tuple(args.shells)
     if not selected_shells:
         if on_win:
             selected_shells = ("cmd.exe", "powershell")
-        if on_mac:
-            selected_shells = ("bash", "zsh")
-        else:
-            selected_shells = ("bash",)
-
+        selected_shells = ("bash", "zsh") if on_mac else ("bash", )
     if args.dev:
         assert (
             len(selected_shells) == 1

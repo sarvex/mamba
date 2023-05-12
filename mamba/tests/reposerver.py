@@ -76,7 +76,7 @@ class RepoSigner:
 
     def __init__(self, in_folder: str) -> None:
         self.in_folder = Path(in_folder).resolve()
-        self.folder = self.in_folder.parent / (str(self.in_folder.name) + "_signed")
+        self.folder = self.in_folder.parent / f"{str(self.in_folder.name)}_signed"
         self.keys["root"] = [
             get_fingerprint(os.environ["KEY1"]),
             get_fingerprint(os.environ["KEY2"]),
@@ -103,7 +103,7 @@ class RepoSigner:
         root_version = 1
 
         root_md = cct_metadata_construction.build_root_metadata(
-            root_pubkeys=root_pubkeys[0:1],
+            root_pubkeys=root_pubkeys[:1],
             root_threshold=1,
             root_version=root_version,
             key_mgr_pubkeys=key_mgr_pubkeys,
@@ -204,8 +204,7 @@ class ChannelHandler(SimpleHTTPRequestHandler):
         # First extract channel name
         channel_name = None
         if tuple(channels.keys()) != (None,):
-            match = self.url_pattern.match(self.path)
-            if match:
+            if match := self.url_pattern.match(self.path):
                 channel_name = match.group(1)
                 # Strip channel for file server
                 start, end = match.span(1)
@@ -246,7 +245,7 @@ class ChannelHandler(SimpleHTTPRequestHandler):
         if not auth_header:
             self.basic_do_AUTHHEAD()
             self.wfile.write(b"no auth header received")
-        elif auth_header == "Basic " + server_key:
+        elif auth_header == f"Basic {server_key}":
             SimpleHTTPRequestHandler.do_GET(self)
         else:
             self.basic_do_AUTHHEAD()
@@ -257,8 +256,7 @@ class ChannelHandler(SimpleHTTPRequestHandler):
 
     def token_do_GET(self, server_token: str) -> None:
         """Present frontpage with user authentication."""
-        match = self.token_pattern.search(self.path)
-        if match:
+        if match := self.token_pattern.search(self.path):
             prefix_length = len(match.group(0)) - 1
             new_path = self.path[prefix_length:]
             found_token = match.group(1)
@@ -359,7 +357,7 @@ if (len(channels) > 1) and (None in channels):
     fatal_error("Cannot use empty channel name when using multiple channels")
 
 server = HTTPServer(("", PORT), ChannelHandler)
-print("Server started at localhost:" + str(PORT))
+print(f"Server started at localhost:{str(PORT)}")
 try:
     server.serve_forever()
 except:

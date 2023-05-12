@@ -35,11 +35,7 @@ class DryRun(Enum):
 
 use_offline = False
 channel = ["-c", "conda-forge"]
-dry_run_tests = DryRun(
-    os.environ["MAMBA_DRY_RUN_TESTS"]
-    if ("MAMBA_DRY_RUN_TESTS" in os.environ)
-    else "OFF"
-)
+dry_run_tests = DryRun(os.environ.get("MAMBA_DRY_RUN_TESTS", "OFF"))
 
 MAMBA_NO_PREFIX_CHECK = 1 << 0
 MAMBA_ALLOW_EXISTING_PREFIX = 1 << 1
@@ -89,8 +85,7 @@ def shell(*args, cwd=os.getcwd()):
     res = subprocess_run(*cmd)
     if "--json" in args:
         try:
-            j = json.loads(res)
-            return j
+            return json.loads(res)
         except json.decoder.JSONDecodeError as e:
             print(f"Error when loading JSON output from {res}")
             raise (e)
@@ -105,8 +100,7 @@ def info(*args):
     res = subprocess_run(*cmd)
     if "--json" in args:
         try:
-            j = json.loads(res)
-            return j
+            return json.loads(res)
         except json.decoder.JSONDecodeError as e:
             print(f"Error when loading JSON output from {res}")
             raise (e)
@@ -147,8 +141,7 @@ def install(*args, default_channel=True, no_rc=True, no_dry_run=False):
 
     if "--json" in args:
         try:
-            j = json.loads(res)
-            return j
+            return json.loads(res)
         except:
             print(res.decode())
             return
@@ -184,8 +177,7 @@ def create(
     try:
         res = subprocess_run(*cmd)
         if "--json" in args:
-            j = json.loads(res)
-            return j
+            return json.loads(res)
         if "--print-config-only" in args:
             return yaml.load(res, Loader=yaml.FullLoader)
         return res.decode()
@@ -206,8 +198,7 @@ def remove(*args, no_dry_run=False):
     try:
         res = subprocess_run(*cmd)
         if "--json" in args:
-            j = json.loads(res)
-            return j
+            return json.loads(res)
         if "--print-config-only" in args:
             return yaml.load(res, Loader=yaml.FullLoader)
         return res.decode()
@@ -228,8 +219,7 @@ def clean(*args, no_dry_run=False):
     try:
         res = subprocess.check_output(cmd)
         if "--json" in args:
-            j = json.loads(res)
-            return j
+            return json.loads(res)
         if "--print-config-only" in args:
             return yaml.load(res, Loader=yaml.FullLoader)
         return res.decode()
@@ -254,15 +244,13 @@ def update(*args, default_channel=True, no_rc=True, no_dry_run=False):
         res = subprocess_run(*cmd)
         if "--json" in args:
             try:
-                j = json.loads(res)
-                return j
+                return json.loads(res)
             except json.decoder.JSONDecodeError as e:
                 print(f"Error when loading JSON output from {res}")
                 raise (e)
         print(f"Error when executing '{' '.join(cmd)}'")
         raise
 
-        return res.decode()
     except subprocess.CalledProcessError as e:
         print(f"Error when executing '{' '.join(cmd)}'")
         raise (e)
@@ -274,11 +262,7 @@ def run_env(*args, f=None):
 
     res = subprocess_run(*cmd)
 
-    if "--json" in args:
-        j = json.loads(res)
-        return j
-
-    return res.decode()
+    return json.loads(res) if "--json" in args else res.decode()
 
 
 def umamba_list(*args):
@@ -287,11 +271,7 @@ def umamba_list(*args):
     cmd = [umamba, "list"] + [str(arg) for arg in args if arg]
     res = subprocess_run(*cmd)
 
-    if "--json" in args:
-        j = json.loads(res)
-        return j
-
-    return res.decode()
+    return json.loads(res) if "--json" in args else res.decode()
 
 
 def umamba_run(*args, **kwargs):
@@ -300,11 +280,7 @@ def umamba_run(*args, **kwargs):
     cmd = [umamba, "run"] + [str(arg) for arg in args if arg]
     res = subprocess_run(*cmd, **kwargs)
 
-    if "--json" in args:
-        j = json.loads(res)
-        return j
-
-    return res.decode()
+    return json.loads(res) if "--json" in args else res.decode()
 
 
 def umamba_repoquery(*args, no_rc=True):
@@ -317,11 +293,7 @@ def umamba_repoquery(*args, no_rc=True):
 
     res = subprocess_run(*cmd)
 
-    if "--json" in args:
-        j = json.loads(res)
-        return j
-
-    return res.decode()
+    return json.loads(res) if "--json" in args else res.decode()
 
 
 def get_concrete_pkg(t, needle):
@@ -350,7 +322,7 @@ def get_pkg(n, f=None, root_prefix=None):
 
 
 def get_concrete_pkg_info(env, pkg_name):
-    with open(os.path.join(env, "conda-meta", pkg_name + ".json")) as fi:
+    with open(os.path.join(env, "conda-meta", f"{pkg_name}.json")) as fi:
         return json.load(fi)
 
 
@@ -406,11 +378,13 @@ def write_windows_registry(target_path, value_value, value_type):  # pragma: no 
 
 @pytest.fixture(scope="session")
 def cache_warming():
-    cache = Path(os.path.expanduser(os.path.join("~", "cache" + random_string())))
+    cache = Path(os.path.expanduser(os.path.join("~", f"cache{random_string()}")))
     os.makedirs(cache)
 
     os.environ["CONDA_PKGS_DIRS"] = str(cache)
-    tmp_prefix = os.path.expanduser(os.path.join("~", "tmpprefix" + random_string()))
+    tmp_prefix = os.path.expanduser(
+        os.path.join("~", f"tmpprefix{random_string()}")
+    )
 
     res = create("-p", tmp_prefix, "xtensor", "--json", no_dry_run=True)
     pkg_name = get_concrete_pkg(res, "xtensor")

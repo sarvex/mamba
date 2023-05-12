@@ -20,8 +20,8 @@ else:
 
 
 def cache_file(cache: Path, pkg_name: str) -> Optional[Path]:
-    tar_bz2 = cache / (pkg_name + ".tar.bz2")
-    conda = cache / (pkg_name + ".conda")
+    tar_bz2 = cache / f"{pkg_name}.tar.bz2"
+    conda = cache / f"{pkg_name}.conda"
     print("Checking for", tar_bz2, conda)
     if tar_bz2.exists():
         return tar_bz2
@@ -48,7 +48,7 @@ class TestPkgCache:
     @classmethod
     @pytest.fixture
     def cache(cls, existing_cache, test_pkg):
-        cache = Path(os.path.expanduser(os.path.join("~", "cache" + random_string())))
+        cache = Path(os.path.expanduser(os.path.join("~", f"cache{random_string()}")))
         os.makedirs(cache)
         link_dir(cache, existing_cache)
 
@@ -231,7 +231,7 @@ class TestMultiplePkgCaches:
     @staticmethod
     @pytest.fixture
     def cache1(existing_cache, first_cache_is_writable):
-        cache = Path(os.path.expanduser(os.path.join("~", "cache" + random_string())))
+        cache = Path(os.path.expanduser(os.path.join("~", f"cache{random_string()}")))
         os.makedirs(cache)
 
         if first_cache_is_writable:
@@ -247,7 +247,7 @@ class TestMultiplePkgCaches:
     @staticmethod
     @pytest.fixture
     def cache2(existing_cache, first_cache_is_writable):
-        cache = Path(os.path.expanduser(os.path.join("~", "cache" + random_string())))
+        cache = Path(os.path.expanduser(os.path.join("~", f"cache{random_string()}")))
         os.makedirs(cache)
         link_dir(cache, existing_cache)
 
@@ -384,8 +384,8 @@ class TestMultiplePkgCaches:
         # check repodata files
         for f in repodata_files:
             for ext in ["json", "solv"]:
-                assert not (cache1 / "cache" / (f + "." + ext)).exists()
-                assert (cache2 / "cache" / (f + "." + ext)).exists()
+                assert not (cache1 / "cache" / f"{f}.{ext}").exists()
+                assert (cache2 / "cache" / f"{f}.{ext}").exists()
 
         # check tarballs
         assert cache_file(cache1, test_pkg) is None
@@ -423,8 +423,8 @@ class TestMultiplePkgCaches:
         # check repodata files
         for f in repodata_files:
             for ext in ["json", "solv"]:
-                assert (cache1 / "cache" / (f + "." + ext)).exists()
-                assert not (cache2 / "cache" / (f + "." + ext)).exists()
+                assert (cache1 / "cache" / f"{f}.{ext}").exists()
+                assert not (cache2 / "cache" / f"{f}.{ext}").exists()
 
         # check tarballs
         assert cache_file(cache1, test_pkg) is None
@@ -459,8 +459,8 @@ class TestMultiplePkgCaches:
         # check repodata files
         for f in repodata_files:
             for ext in ["json", "solv"]:
-                assert (cache1 / "cache" / (f + "." + ext)).exists()
-                assert not (cache2 / "cache" / (f + "." + ext)).exists()
+                assert (cache1 / "cache" / f"{f}.{ext}").exists()
+                assert not (cache2 / "cache" / f"{f}.{ext}").exists()
 
         # check tarballs
         assert cache_file(cache1, test_pkg).exists()
@@ -496,8 +496,8 @@ class TestMultiplePkgCaches:
         # check repodata files
         for f in repodata_files:
             for ext in ["json", "solv"]:
-                assert (cache1 / "cache" / (f + "." + ext)).exists()
-                assert not (cache2 / "cache" / (f + "." + ext)).exists()
+                assert (cache1 / "cache" / f"{f}.{ext}").exists()
+                assert not (cache2 / "cache" / f"{f}.{ext}").exists()
 
         # check tarballs
         assert cache_file(cache1, test_pkg).exists()
@@ -543,8 +543,8 @@ class TestMultiplePkgCaches:
         # check repodata files
         for f in repodata_files:
             for ext in ["json", "solv"]:
-                assert (cache1 / "cache" / (f + "." + ext)).exists()
-                assert (cache2 / "cache" / (f + "." + ext)).exists()
+                assert (cache1 / "cache" / f"{f}.{ext}").exists()
+                assert (cache2 / "cache" / f"{f}.{ext}").exists()
 
         # check tarballs
         assert cache_file(cache1, test_pkg).exists()

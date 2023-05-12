@@ -53,7 +53,7 @@ class TestUpdate:
 
     def test_constrained_update(self, env_created):
         update_res = update(
-            "xtensor<=" + self.medium_old_version, "-n", env_created, "--json"
+            f"xtensor<={self.medium_old_version}", "-n", env_created, "--json"
         )
         xtensor_link = [
             l for l in update_res["actions"]["LINK"] if l["name"] == "xtensor"
@@ -347,7 +347,7 @@ class TestUpdateConfig:
             cmd += ["-n", n]
 
         if yaml_name:
-            f_name = random_string() + ".yaml"
+            f_name = f"{random_string()}.yaml"
             spec_file = os.path.join(TestUpdateConfig.prefix, f_name)
 
             if yaml_name == "prefix":
@@ -400,7 +400,7 @@ class TestUpdateConfig:
             expected_channels += ["cli"]
 
         if yaml:
-            f_name = random_string() + ".yaml"
+            f_name = f"{random_string()}.yaml"
             spec_file = os.path.join(TestUpdateConfig.prefix, f_name)
 
             file_content = [
@@ -418,7 +418,7 @@ class TestUpdateConfig:
             expected_channels += ["env_var"]
 
         if rc_file:
-            f_name = random_string() + ".yaml"
+            f_name = f"{random_string()}.yaml"
             rc_file = os.path.join(TestUpdateConfig.prefix, f_name)
 
             file_content = ["channels: [rc]"]

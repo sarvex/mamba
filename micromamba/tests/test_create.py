@@ -180,14 +180,11 @@ def test_target_prefix(
 ):
     cmd = []
 
-    if root_prefix_type is None:
+    if root_prefix_type is None or root_prefix_type != "cli":
         root_prefix = Path(os.environ["MAMBA_ROOT_PREFIX"])
-    elif root_prefix_type == "cli":
+    else:
         root_prefix = tmp_path / "myroot"
         cmd += ["-r", root_prefix]
-    else:
-        root_prefix = Path(os.environ["MAMBA_ROOT_PREFIX"])
-
     env_prefix = tmp_path / "myenv"
 
     if target_is_root:
@@ -202,11 +199,7 @@ def test_target_prefix(
         expected_p = root_prefix / "envs" / n
 
     if similar_non_canonical:
-        if non_canonical_position == "append":
-            p = p / "."
-        else:
-            p = p.parent / "." / p.name
-
+        p = p / "." if non_canonical_position == "append" else p.parent / "." / p.name
     if cli_prefix:
         cmd += ["-p", p]
 

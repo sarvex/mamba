@@ -24,13 +24,12 @@ data_files = [
     ("etc/fish/conf.d", ["mamba/shell_templates/mamba.fish"]),
 ]
 if sys.platform == "win32":
-    data_files.append(
-        ("condabin", ["mamba/shell_templates/mamba.bat"]),
+    data_files.extend(
+        (
+            ("condabin", ["mamba/shell_templates/mamba.bat"]),
+            ("Library/bin", ["mamba/shell_templates/win_redirect/mamba.bat"]),
+        )
     )
-    data_files.append(
-        ("Library/bin", ["mamba/shell_templates/win_redirect/mamba.bat"]),
-    )
-
 setup(
     name="mamba",
     version=__version__,

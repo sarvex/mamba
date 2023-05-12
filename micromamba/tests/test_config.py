@@ -25,11 +25,7 @@ def config(*args):
     umamba = helpers.get_umamba()
     cmd = [umamba, "config"] + [arg for arg in args if arg]
     res = helpers.subprocess_run(*cmd)
-    if "--json" in args:
-        j = yaml.load(res, yaml.FullLoader)
-        return j
-
-    return res.decode()
+    return yaml.load(res, yaml.FullLoader) if "--json" in args else res.decode()
 
 
 @pytest.fixture

@@ -12,8 +12,7 @@ import yaml
 
 def get_lines(std_pipe):
     """Generator that yields lines from a standard pipe as they are printed."""
-    for line in iter(std_pipe.readline, ""):
-        yield line
+    yield from iter(std_pipe.readline, "")
 
 
 class Shell:
@@ -25,7 +24,7 @@ class Shell:
             universal_newlines=True,
         )
         self.sentinel = "__command_done__"
-        self.echo_sentinel = "echo " + self.sentinel
+        self.echo_sentinel = f"echo {self.sentinel}"
 
         if platform.system() == "Windows":
             if shell_type == "cmd.exe":
@@ -60,7 +59,7 @@ class Shell:
         while wait_for_sentinel:
             for line in get_lines(self.process.stdout):
                 if self.sentinel != line[:-1]:
-                    if all([c not in line[:-1] for c in commands]) and line[:-1]:
+                    if all(c not in line[:-1] for c in commands) and line[:-1]:
                         print(line, end="")
                         out.append(line[:-1])
                 else:
@@ -85,9 +84,9 @@ class Shell:
 class Environment:
     def __init__(self, shell_type):
         self.shell = Shell(shell_type)
-        self.name = "env_" + str(uuid.uuid1())
+        self.name = f"env_{str(uuid.uuid1())}"
 
-        self.shell.conda("create -q -y -n " + self.name)
+        self.shell.conda(f"create -q -y -n {self.name}")
         self.shell.conda(f"activate {self.name}")
 
     def __enter__(self):
@@ -157,13 +156,11 @@ def config_file(request):
 def add_glibc_virtual_package():
     version = get_glibc_version()
     here = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(here, "channel_a/linux-64/repodata.tpl")) as f:
-        repodata = f.read()
+    repodata = Path(
+        os.path.join(here, "channel_a/linux-64/repodata.tpl")
+    ).read_text()
     with open(os.path.join(here, "channel_a/linux-64/repodata.json"), "w") as f:
-        if version is not None:
-            glibc_placeholder = ', "__glibc=' + version + '"'
-        else:
-            glibc_placeholder = ""
+        glibc_placeholder = f', "__glibc={version}"' if version is not None else ""
         repodata = repodata.replace("GLIBC_PLACEHOLDER", glibc_placeholder)
         f.write(repodata)
 
@@ -176,10 +173,9 @@ def copy_channels_osx():
                 os.path.join(here, f"channel_{channel}/linux-64"),
                 os.path.join(here, f"channel_{channel}/osx-64"),
             )
-            with open(
+            repodata = Path(
                 os.path.join(here, f"channel_{channel}/osx-64/repodata.json")
-            ) as f:
-                repodata = f.read()
+            ).read_text()
             with open(
                 os.path.join(here, f"channel_{channel}/osx-64/repodata.json"), "w"
             ) as f:

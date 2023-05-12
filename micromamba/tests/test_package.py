@@ -52,12 +52,13 @@ def test_extract(cph_test_file: Path, tmp_path: Path):
         dest_dir=str(tmp_path / "cph" / "cph_test_data-0.0.1-0"),
     )
 
-    conda = set(
-        (p.relative_to(tmp_path / "cph") for p in (tmp_path / "cph").rglob("**/*"))
-    )
-    mamba = set(
-        (p.relative_to(tmp_path / "mm") for p in (tmp_path / "mm").rglob("**/*"))
-    )
+    conda = {
+        p.relative_to(tmp_path / "cph")
+        for p in (tmp_path / "cph").rglob("**/*")
+    }
+    mamba = {
+        p.relative_to(tmp_path / "mm") for p in (tmp_path / "mm").rglob("**/*")
+    }
     assert conda == mamba
 
     extracted = cph_test_file.name.removesuffix(".tar.bz2")
@@ -81,11 +82,10 @@ def compare_two_tarfiles(tar1, tar2):
         if platform.system() != "Windows":
             if not m1.issym():
                 assert m1.mode == m2.mode
+            elif platform.system() == "Linux":
+                assert m2.mode == 0o777
             else:
-                if platform.system() == "Linux":
-                    assert m2.mode == 0o777
-                else:
-                    assert m1.mode == m2.mode
+                assert m1.mode == m2.mode
             assert m1.mtime == m2.mtime
 
         assert m2.uid == 0

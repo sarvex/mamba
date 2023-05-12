@@ -15,8 +15,7 @@ def constructor(*args, default_channel=True, no_rc=True, no_dry_run=False):
         res = subprocess.check_output(cmd)
         if "--json" in args:
             try:
-                j = json.loads(res)
-                return j
+                return json.loads(res)
             except json.decoder.JSONDecodeError as e:
                 print(f"Error when loading JSON output from {res}")
                 raise (e)
@@ -92,6 +91,6 @@ class TestInstall:
             assert repodata_record["md5"] == "123412341234"
             assert (
                 repodata_record["url"]
-                == "http://testurl.com/conda-forge/linux-64/" + pkg
+                == f"http://testurl.com/conda-forge/linux-64/{pkg}"
             )
             assert repodata_record["depends"] == index["depends"]

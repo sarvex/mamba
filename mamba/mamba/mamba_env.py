@@ -55,7 +55,7 @@ def mamba_install(prefix, specs, args, env, dry_run=False, *_, **kwargs):
     index = load_channels(pool, channel_urls, repos, prepend=False)
 
     if not (context.quiet or context.json):
-        print("\n\nLooking for: {}\n\n".format(specs))
+        print(f"\n\nLooking for: {specs}\n\n")
 
     solver_options = [(api.SOLVER_FLAG_ALLOW_DOWNGRADE, 1)]
 
@@ -89,28 +89,29 @@ def mamba_install(prefix, specs, args, env, dry_run=False, *_, **kwargs):
     # If python was not specified, check if it is installed.
     # If yes, add the installed python to the specs to prevent updating it.
     installed_names = [i_rec.name for i_rec in installed_pkg_recs]
-    if "python" not in [s.name for s in match_specs]:
-        if "python" in installed_names:
-            i = installed_names.index("python")
-            version = installed_pkg_recs[i].version
-            python_constraint = MatchSpec("python==" + version).conda_build_form()
-            solver.add_pin(python_constraint)
+    if (
+        "python" not in [s.name for s in match_specs]
+        and "python" in installed_names
+    ):
+        i = installed_names.index("python")
+        version = installed_pkg_recs[i].version
+        python_constraint = MatchSpec(f"python=={version}").conda_build_form()
+        solver.add_pin(python_constraint)
 
     pinned_specs = get_pinned_specs(prefix)
     pinned_specs_info = ""
     if pinned_specs:
         conda_prefix_data = PrefixData(prefix)
     for s in pinned_specs:
-        x = conda_prefix_data.query(s.name)
-        if x:
+        if x := conda_prefix_data.query(s.name):
             for el in x:
                 if not s.match(el):
                     print(
                         "Your pinning does not match what's currently installed."
                         " Please remove the pin and fix your installation"
                     )
-                    print("  Pin: {}".format(s))
-                    print("  Currently installed: {}".format(el))
+                    print(f"  Pin: {s}")
+                    print(f"  Currently installed: {el}")
                     exit(1)
 
         try:
@@ -127,12 +128,14 @@ def mamba_install(prefix, specs, args, env, dry_run=False, *_, **kwargs):
     if pinned_specs_info:
         print(f"\n  Pinned packages:\n\n{pinned_specs_info}\n")
 
-    install_specs = [s for s in specs if MatchSpec(s).name not in installed_names]
-    if install_specs:
+    if install_specs := [
+        s for s in specs if MatchSpec(s).name not in installed_names
+    ]:
         solver.add_jobs(install_specs, api.SOLVER_INSTALL)
 
-    update_specs = [s for s in specs if MatchSpec(s).name in installed_names]
-    if update_specs:
+    if update_specs := [
+        s for s in specs if MatchSpec(s).name in installed_names
+    ]:
         solver.add_jobs(update_specs, api.SOLVER_UPDATE)
 
     success = solver.try_solve()
@@ -192,5 +195,5 @@ conda.dry_run = mamba_dry_run
 def main():
     from conda_env.cli.main import main as conda_env_main
 
-    sys.argv = sys.argv[0:1] + sys.argv[2:]
+    sys.argv = sys.argv[:1] + sys.argv[2:]
     return conda_env_main()

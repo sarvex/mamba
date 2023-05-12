@@ -39,7 +39,7 @@ def bin2header(comment, data, var_name, extern=False):
     for i in range(0, len(data), 12):
         hex_chunk = ", ".join(f"0x{x:02x}" for x in data[i:][:12])
         yield indent + hex_chunk + ","
-    yield indent + "0x00 // Terminating null byte"
+    yield f"{indent}0x00 // Terminating null byte"
     yield "};"
     yield f"const std::size_t {var_name}_len = {len(data)};"
 

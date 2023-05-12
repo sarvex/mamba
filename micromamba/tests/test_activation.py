@@ -84,7 +84,7 @@ def extract_vars(vxs, interpreter):
 
 
 def write_script(interpreter, lines, path):
-    fname = os.path.join(path, "script" + suffixes[interpreter])
+    fname = os.path.join(path, f"script{suffixes[interpreter]}")
     if plat == "win":
         if interpreter == "powershell":
             with open(fname, "w", encoding="utf-8-sig") as fo:
@@ -132,11 +132,7 @@ def winreg_value():
 def find_path_in_str(p, s):
     if isinstance(p, Path):
         p = str(p)
-    if p in s:
-        return True
-    if p.replace("\\", "\\\\") in s:
-        return True
-    return False
+    return True if p in s else p.replace("\\", "\\\\") in s
 
 
 def format_path(p, interpreter):
@@ -159,7 +155,7 @@ def call_interpreter(s, tmp_path, interpreter, interactive=False, env=None):
             if x.startswith("micromamba activate") or x.startswith(
                 "micromamba deactivate"
             ):
-                mods.append("call " + x)
+                mods.append(f"call {x}")
             else:
                 mods.append(x)
         s = mods
@@ -201,9 +197,12 @@ def call_interpreter(s, tmp_path, interpreter, interactive=False, env=None):
         except:
             pass
 
-        if interpreter == "cmd.exe":
-            if stdout.startswith("'") and stdout.endswith("'"):
-                stdout = stdout[1:-1]
+        if (
+            interpreter == "cmd.exe"
+            and stdout.startswith("'")
+            and stdout.endswith("'")
+        ):
+            stdout = stdout[1:-1]
 
         e.stdout = stdout
         e.stderr = stderr
@@ -220,9 +219,12 @@ def call_interpreter(s, tmp_path, interpreter, interactive=False, env=None):
     except:
         pass
 
-    if interpreter == "cmd.exe":
-        if stdout.startswith("'") and stdout.endswith("'"):
-            stdout = stdout[1:-1]
+    if (
+        interpreter == "cmd.exe"
+        and stdout.startswith("'")
+        and stdout.endswith("'")
+    ):
+        stdout = stdout[1:-1]
 
     return stdout, stderr
 
@@ -254,21 +256,18 @@ valid_interpreters = get_valid_interpreters()
 @pytest.fixture
 def backup_umamba():
     mamba_exe = get_umamba()
-    shutil.copyfile(mamba_exe, mamba_exe + ".orig")
+    shutil.copyfile(mamba_exe, f"{mamba_exe}.orig")
 
     yield mamba_exe
 
-    shutil.move(mamba_exe + ".orig", mamba_exe)
+    shutil.move(f"{mamba_exe}.orig", mamba_exe)
     os.chmod(mamba_exe, 0o755)
 
 
 def get_self_update_interpreters():
     if plat == "win":
         return ["cmd.exe", "powershell", "bash"]
-    if plat == "osx":
-        return ["zsh", "bash"]
-    else:
-        return ["bash"]
+    return ["zsh", "bash"] if plat == "osx" else ["bash"]
 
 
 def shvar(v, interpreter):
@@ -354,7 +353,7 @@ class TestActivation:
             assert "mamba_hook.bat" in value[0]
             assert find_path_in_str(tmp_root_prefix, value[0])
             assert prev_text == value[0]
-            assert not "&" in value[0]
+            assert "&" not in value[0]
         else:
             with open(path) as fi:
                 x = fi.read()
@@ -425,7 +424,7 @@ class TestActivation:
 
         umamba = get_umamba()
 
-        if interpreter == "bash" or interpreter == "zsh":
+        if interpreter in ["bash", "zsh"]:
             files = [tmp_root_prefix / "etc" / "profile.d" / "micromamba.sh"]
         elif interpreter == "cmd.exe":
             files = [
@@ -525,8 +524,7 @@ class TestActivation:
         path = Path(paths[plat][interpreter]).expanduser()
 
         if os.path.exists(path):
-            with open(path) as fi:
-                prev_rc_contents = fi.read()
+            prev_rc_contents = pathlib.Path(path).read_text()
         else:
             prev_rc_contents = ""
         if interpreter == "powershell":
@@ -554,8 +552,7 @@ class TestActivation:
         call(s)
 
         if os.path.exists(path):
-            with open(path) as fi:
-                rc_contents_after_deinit = fi.read()
+            rc_contents_after_deinit = pathlib.Path(path).read_text()
         else:
             rc_contents_after_deinit = ""
         assert rc_contents_after_deinit == prev_rc_contents
@@ -718,10 +715,11 @@ class TestActivation:
             )
             idxs = []
             for el in ["TEST", "HELLO", "WORKING", "AAA"]:
-                for idx, line in enumerate(activation_script.splitlines()):
-                    if line.startswith(f"export {el}="):
-                        idxs.append(idx)
-                        continue
+                idxs.extend(
+                    idx
+                    for idx, line in enumerate(activation_script.splitlines())
+                    if line.startswith(f"export {el}=")
+                )
             assert len(idxs) == 4
 
             # make sure that the order is correct
@@ -818,7 +816,7 @@ class TestActivation:
             assert "condabin" in res["PATH"]
             assert str(tmp_root_prefix) in res["PATH"]
             assert f"CONDA_PREFIX={tmp_root_prefix}" in stdout.splitlines()
-            assert f"CONDA_SHLVL=1" in stdout.splitlines()
+            assert "CONDA_SHLVL=1" in stdout.splitlines()
 
             # throw with non-existent
             s = ["micromamba activate nonexistent"]
@@ -854,7 +852,7 @@ class TestActivation:
                 return
 
             s = [
-                f"micromamba activate",
+                "micromamba activate",
                 f"micromamba activate {u1}",
                 f"micromamba activate {u2}",
             ] + evars
@@ -899,18 +897,18 @@ class TestActivation:
         res = shell("activate", tmp_env_name, "-s", interpreter)
         dict_res = self.to_dict(res, interpreter)
 
-        assert any([str(tmp_empty_env) in p for p in dict_res.values()])
+        assert any(str(tmp_empty_env) in p for p in dict_res.values())
 
         # Activate path
         res = shell("activate", str(tmp_empty_env), "-s", interpreter)
         dict_res = self.to_dict(res, interpreter)
-        assert any([str(tmp_empty_env) in p for p in dict_res.values()])
+        assert any(str(tmp_empty_env) in p for p in dict_res.values())
 
         # Activate path with home
         prefix_short = str(tmp_empty_env).replace(os.path.expanduser("~"), "~")
         res = shell("activate", prefix_short, "-s", interpreter)
         dict_res = self.to_dict(res, interpreter)
-        assert any([str(tmp_empty_env) in p for p in dict_res.values()])
+        assert any(str(tmp_empty_env) in p for p in dict_res.values())
 
     @pytest.mark.parametrize("interpreter", get_self_update_interpreters())
     def test_self_update(
@@ -971,7 +969,7 @@ class TestActivation:
         version = subprocess.check_output([mamba_exe, "--version"])
         assert version.decode("utf8").strip() == "0.25.1"
 
-        assert not Path(mamba_exe + ".bkup").exists()
+        assert not Path(f"{mamba_exe}.bkup").exists()
 
-        shutil.copyfile(mamba_exe + ".orig", mamba_exe)
+        shutil.copyfile(f"{mamba_exe}.orig", mamba_exe)
         os.chmod(mamba_exe, 0o755)

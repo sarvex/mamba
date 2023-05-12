@@ -11,7 +11,7 @@ from .helpers import create, random_string, umamba_run
 
 common_simple_flags = ["", "-d", "--detach", "--clean-env"]
 possible_characters_for_process_names = (
-    "-_" + string.ascii_uppercase + string.digits + string.ascii_lowercase
+    f"-_{string.ascii_uppercase}{string.digits}{string.ascii_lowercase}"
 )
 
 
@@ -44,7 +44,7 @@ class TestRun:
         except:
             fails = True
 
-        assert fails == True
+        assert fails
 
     @pytest.mark.parametrize("option_flag", common_simple_flags)
     @pytest.mark.parametrize("make_label_flags", next_label_flags)
@@ -58,11 +58,11 @@ class TestRun:
             fails = True
 
         # In detach mode we fork micromamba and don't have a way to know if the executable exists.
-        if option_flag == "-d" or option_flag == "--detach":
-            assert fails == False
+        if option_flag in ["-d", "--detach"]:
+            assert not fails
             return
 
-        assert fails == True
+        assert fails
 
     @pytest.mark.parametrize("option_flag", common_simple_flags)
     # @pytest.mark.parametrize("label_flags", naming_flags()) # TODO: reactivate after fixing help flag not disactivating the run
@@ -93,9 +93,7 @@ class TestRun:
         )
         if not os.path.isfile(test_script_path):
             raise RuntimeError(
-                "missing test script '{}' at '{}".format(
-                    test_script_file_name, test_script_path
-                )
+                f"missing test script '{test_script_file_name}' at '{test_script_path}"
             )
         assert subprocess.run(test_script_path, shell=True).returncode == 0
 
@@ -116,7 +114,9 @@ def temp_env_prefix():
     previous_prefix = os.environ["CONDA_PREFIX"]
 
     env_name = random_string()
-    root_prefix = os.path.expanduser(os.path.join("~", "tmproot" + random_string()))
+    root_prefix = os.path.expanduser(
+        os.path.join("~", f"tmproot{random_string()}")
+    )
     prefix = os.path.join(root_prefix, "envs", env_name)
 
     os.environ["MAMBA_ROOT_PREFIX"] = root_prefix

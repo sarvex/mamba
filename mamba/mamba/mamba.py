@@ -108,7 +108,7 @@ def specs_from_args(args, json=False):
         try:
             spec = MatchSpec(arg)
         except Exception:
-            raise CondaValueError("invalid package specification: %s" % arg)
+            raise CondaValueError(f"invalid package specification: {arg}")
 
         name = spec.name
         if not spec._is_simple() and update:
@@ -128,7 +128,7 @@ use_mamba_experimental = False
 
 
 def remove(args, parser):
-    if not (args.all or args.package_names):
+    if not args.all and not args.package_names:
         raise CondaValueError(
             "no package names supplied,\n"
             '       try "mamba remove -h" for more details'
@@ -169,9 +169,7 @@ def remove(args, parser):
             try:
                 handle_txn(txn, prefix, args, False, True)
             except PackagesNotFoundError:
-                print(
-                    "No packages found in %s. Continuing environment removal" % prefix
-                )
+                print(f"No packages found in {prefix}. Continuing environment removal")
 
         rm_rf(prefix, clean_empty_parents=True)
         unregister_env(prefix)
@@ -182,9 +180,9 @@ def remove(args, parser):
         if args.features:
             specs = tuple(MatchSpec(track_features=f) for f in set(args.package_names))
         else:
-            specs = [s for s in specs_from_args(args.package_names)]
+            specs = list(specs_from_args(args.package_names))
         if not context.quiet:
-            print("Removing specs: {}".format([s.conda_build_form() for s in specs]))
+            print(f"Removing specs: {[s.conda_build_form() for s in specs]}")
 
         installed_json_f, installed_pkg_recs = get_installed_jsonfile(prefix)
 
@@ -196,17 +194,13 @@ def remove(args, parser):
             solver_options.append((api.SOLVER_FLAG_STRICT_REPO_PRIORITY, 1))
 
         pool = api.Pool()
-        repos = []
-
         # add installed
         if use_mamba_experimental:
             prefix_data = api.PrefixData(context.target_prefix)
             repo = api.Repo(pool, prefix_data)
-            repos.append(repo)
         else:
             repo = load_conda_installed(pool, installed_json_f, installed_pkg_recs)
-            repos.append(repo)
-
+        repos = [repo]
         solver = api.Solver(pool, solver_options)
 
         history = api.History(context.target_prefix)
@@ -220,9 +214,7 @@ def remove(args, parser):
         success = solver.try_solve()
         if not success:
             print(solver.explain_problems())
-            exit_code = 1
-            return exit_code
-
+            return 1
         package_cache = api.MultiPackageCache(context.pkgs_dirs)
         transaction = api.Transaction(pool, solver, package_cache)
 

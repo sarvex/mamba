@@ -115,23 +115,20 @@ class MermaidGraph(InheritanceGraph):
         #     n_attrs.update(env.config.inheritance_node_attrs)
         #     e_attrs.update(env.config.inheritance_edge_attrs)
 
-        res = []  # type: List[str]
+        res = ["classDiagram\n"]
 
-        res.append("classDiagram\n")
         for name, fullname, bases, tooltip in sorted(self.class_info):
             # Write the node
             res.append("  class {!s}\n".format(name))
             if fullname in urls:
                 res.append(
                     '  link {!s} "./{!s}" {!s}\n'.format(
-                        name, urls[fullname], tooltip or '"{}"'.format(name)
+                        name, urls[fullname], tooltip or f'"{name}"'
                     )
                 )
 
             # Write the edges
-            for base_name in bases:
-                res.append("  {!s} <|-- {!s}\n".format(base_name, name))
-
+            res.extend("  {!s} <|-- {!s}\n".format(base_name, name) for base_name in bases)
         return "".join(res)
 
 
@@ -169,8 +166,7 @@ class MermaidDiagram(InheritanceDiagram):
         node["content"] = ", ".join(class_names)
         node["top-classes"] = []
         for cls in self.options.get("top-classes", "").split(","):
-            cls = cls.strip()
-            if cls:
+            if cls := cls.strip():
                 node["top-classes"].append(cls)
 
         # Create a graph starting with the list of classes
@@ -191,9 +187,7 @@ class MermaidDiagram(InheritanceDiagram):
         # references to real URLs later.  These nodes will eventually be
         # removed from the doctree after we're done with them.
         for name in graph.get_all_class_names():
-            refnodes, x = class_role(  # type: ignore
-                "class", ":class:`%s`" % name, name, 0, self.state
-            )  # type: ignore
+            refnodes, x = class_role("class", f":class:`{name}`", name, 0, self.state)
             node.extend(refnodes)
         # Store the graph object so we can use it to generate the
         # dot file later
@@ -218,7 +212,7 @@ def html_visit_mermaid_inheritance(
     graph = node["graph"]
 
     graph_hash = get_graph_hash(node)
-    name = "inheritance%s" % graph_hash
+    name = f"inheritance{graph_hash}"
 
     # Create a mapping from fully-qualified class names to URLs.
     mermaid_output_format = self.builder.env.config.mermaid_output_format.upper()
@@ -233,9 +227,7 @@ def html_visit_mermaid_inheritance(
                 urls[child["reftitle"]] = child.get("refuri")
         elif child.get("refid") is not None:
             if mermaid_output_format == "SVG":
-                urls[child["reftitle"]] = (
-                    "../" + current_filename + "#" + child.get("refid")
-                )
+                urls[child["reftitle"]] = f"../{current_filename}#" + child.get("refid")
             else:
                 urls[child["reftitle"]] = "#" + child.get("refid")
     dotcode = graph.generate_dot(name, urls, env=self.builder.env)
@@ -260,7 +252,7 @@ def latex_visit_mermaid_inheritance(
     graph = node["graph"]
 
     graph_hash = get_graph_hash(node)
-    name = "inheritance%s" % graph_hash
+    name = f"inheritance{graph_hash}"
 
     dotcode = graph.generate_dot(
         name,
@@ -280,7 +272,7 @@ def texinfo_visit_mermaid_inheritance(
     graph = node["graph"]
 
     graph_hash = get_graph_hash(node)
-    name = "inheritance%s" % graph_hash
+    name = f"inheritance{graph_hash}"
 
     dotcode = graph.generate_dot(
         name,

@@ -31,7 +31,7 @@ def apply_changelog(name, version, changes):
             res += f"{c}\n"
     res += "\n"
 
-    cl_file = name + "/CHANGELOG.md"
+    cl_file = f"{name}/CHANGELOG.md"
     with open(cl_file, "r") as fi:
         prev_cl = fi.read()
     with open(cl_file, "w") as fo:
@@ -168,23 +168,21 @@ def main():
                     x.strip() for x in m.groups(1)[0].split(",")
                 ]
 
-        else:
-            if c.startswith(" "):
-                if in_section:
-                    sections[-1].text += " " + c.strip()
-                else:
-                    sections[-1].items[-1].text += c.strip()
+        elif c.startswith(" "):
+            if in_section:
+                sections[-1].text += f" {c.strip()}"
             else:
-                if not in_section:
-                    sections[-1].items.append(Item())
-                    sections[-1].items[-1].text = c.strip()
-                    sections[-1].items[-1].applies_to = ["all"]
+                sections[-1].items[-1].text += c.strip()
+        elif not in_section:
+            sections[-1].items.append(Item())
+            sections[-1].items[-1].text = c.strip()
+            sections[-1].items[-1].applies_to = ["all"]
 
     for c in changes:
         populate_changes(c, sections, changes)
 
-    for el in changes:
-        apply_changelog(el, changes[el]["version"], changes[el]["changes"])
+    for el, value in changes.items():
+        apply_changelog(el, value["version"], changes[el]["changes"])
 
     commands(changes)
 

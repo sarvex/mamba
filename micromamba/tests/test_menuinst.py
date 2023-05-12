@@ -37,7 +37,7 @@ class TestMenuinst:
         create("miniforge_console_shortcut=1.0", "-n", env_name, no_dry_run=True)
         prefix = os.path.join(self.root_prefix, "envs", env_name)
         d = self.dirs["user"]["start"][0]
-        lnk = os.path.join(d, "Miniforge", "Miniforge Prompt (" + env_name + ").lnk")
+        lnk = os.path.join(d, "Miniforge", f"Miniforge Prompt ({env_name}).lnk")
 
         assert os.path.exists(lnk)
 
@@ -52,7 +52,7 @@ class TestMenuinst:
         )
         assert icon_location_index == "0"
 
-        assert shortcut.Description == "Miniforge Prompt (" + env_name + ")"
+        assert shortcut.Description == f"Miniforge Prompt ({env_name})"
         assert shortcut.Arguments == "/K " + str(
             Path(self.root_prefix, "Scripts", "activate.bat")
         ) + " " + str(Path(prefix))
@@ -70,7 +70,7 @@ class TestMenuinst:
         create("miniforge_console_shortcut=1.0", "-n", env_name, no_dry_run=True)
         prefix = os.path.join(root_prefix, "envs", env_name)
         d = self.dirs["user"]["start"][0]
-        lnk = os.path.join(d, "Miniforge", "Miniforge Prompt (" + env_name + ").lnk")
+        lnk = os.path.join(d, "Miniforge", f"Miniforge Prompt ({env_name}).lnk")
 
         assert os.path.exists(lnk)
 
@@ -86,7 +86,7 @@ class TestMenuinst:
         )
         assert icon_location_index == "0"
 
-        assert shortcut.Description == "Miniforge Prompt (" + env_name + ")"
+        assert shortcut.Description == f"Miniforge Prompt ({env_name})"
         assert (
             shortcut.Arguments
             == '/K "'

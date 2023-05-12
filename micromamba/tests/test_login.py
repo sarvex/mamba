@@ -39,15 +39,15 @@ def reposerver_multi(
         if "name" in channel:
             computed_args += ["--name", channel["name"]]
         auth = channel["auth"]
-        if auth == "token":
-            computed_args += ["--token", channel["token"]]
-        elif auth == "basic":
+        if auth == "basic":
             computed_args += [
                 "--user",
                 channel["user"],
                 "--password",
                 channel["password"],
             ]
+        elif auth == "token":
+            computed_args += ["--token", channel["token"]]
         else:
             raise ValueError("Wrong authentication method")
         computed_args += ["--"]
@@ -62,11 +62,7 @@ def reposerver_multi(
     # ensure process is running and return its logfile
     xprocess.ensure("reposerver", Starter)
 
-    # create a connection or url/port info to the server
-    conn = f"http://localhost:{port}"
-
-    yield conn
-
+    yield f"http://localhost:{port}"
     # clean up whole process tree afterwards
     xprocess.getinfo("reposerver").terminate()
 
@@ -91,13 +87,9 @@ def multi_server(xprocess, channels):
 
 
 def create(*in_args, folder=None, root=None, override_channels=True):
-    args = [arg for arg in in_args]
+    args = list(in_args)
 
-    if folder:
-        args += ["-p", str(folder)]
-    else:
-        args += ["--dry-run", "-n", random_string()]
-
+    args += ["-p", str(folder)] if folder else ["--dry-run", "-n", random_string()]
     if root:
         args += ["--root-prefix", str(root)]
 

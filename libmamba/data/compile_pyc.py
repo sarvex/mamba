@@ -13,10 +13,10 @@ def main():
     with sys.stdin:
         with ProcessPoolExecutor(max_workers=max_workers) as executor:
             while True:
-                name = sys.stdin.readline().strip()
-                if not name:
+                if name := sys.stdin.readline().strip():
+                    results.append(executor.submit(compile_file, name, quiet=1))
+                else:
                     break
-                results.append(executor.submit(compile_file, name, quiet=1))
             success = all(r.result() for r in results)
     return success
 
